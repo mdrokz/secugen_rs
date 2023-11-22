@@ -1,17 +1,10 @@
-use std::{mem::MaybeUninit, ffi::c_void};
+use std::{ffi::c_void, mem::MaybeUninit};
 
 use neon::prelude::*;
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
-#[derive(Debug, Clone, Copy)]
-struct DeviceInfo {
-    image_width: u64,
-    image_height: u64,
-    com_speed: u64,
-    com_port: u64,
-}
-
+mod sgfpm;
 
 pub fn init_device<'a>(mut cx: FunctionContext<'a>) -> JsResult<'a, JsBoolean> {
     // let mut fpm = fpm.borrow_mut();
@@ -78,6 +71,8 @@ pub fn init_device<'a>(mut cx: FunctionContext<'a>) -> JsResult<'a, JsBoolean> {
             com_speed: p_info.ComSpeed,
             com_port: p_info.ComPort,
         };
+
+        println!("device_info: {:?}", device_info);
     }
 
     Ok(cx.boolean(true))
