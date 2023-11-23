@@ -13,7 +13,6 @@ keywords = ["sdk","secugen","fingerprint","biometrics"]
 [dependencies]
 
 [lib]
-crate-type = ["cdylib"]
 name = "secugen_rs"
 path = "src/lib.rs"
 
