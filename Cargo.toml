@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Rust bindings for the SecuGen SDK"
 categories = ["api-bindings"]
+readme = "README.md"
 license-file = "LICENSE.txt"
 keywords = ["sdk","secugen","fingerprint","biometrics"]
 
