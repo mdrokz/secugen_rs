@@ -5,7 +5,7 @@ use crate::{
     SGFDxErrorCode_SGFDX_ERROR_NONE, SGFDxErrorCode_SGFDX_ERROR_WRONG_IMAGE,
     SGFPM_EnableCheckOfFingerLiveness, SGFPM_EnableSmartCapture, SGFPM_GetDeviceInfo,
     SGFPM_GetImage, SGFPM_GetMatchingScore, SGFPM_Init, SGFPM_MatchTemplate, SGFPM_OpenDevice,
-    SGFPM_SetBrightness, SGFPM_SetFakeDetectionLevel, SGFPM,
+    SGFPM_SetBrightness, SGFPM_SetFakeDetectionLevel, SGFPM,SGFPM_Terminate,SGFPM_CloseDevice
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -21,6 +21,15 @@ pub struct DeviceInfo {
 pub struct FPM {
     sgfpm: *mut SGFPM,
     device_info: Option<DeviceInfo>,
+}
+
+impl Drop for FPM {
+    fn drop(&mut self) {
+        unsafe {
+            SGFPM_CloseDevice(self.sgfpm as *mut c_void);
+            SGFPM_Terminate(self.sgfpm as *mut c_void);
+        }
+    }
 }
 
 impl FPM {
@@ -167,6 +176,18 @@ impl FPM {
             };
 
             self.device_info = Some(device_info);
+
+            Ok(true)
+        }
+    }
+
+    pub fn close_device(&mut self) -> Result<bool, String> {
+        unsafe {
+            let err = SGFPM_CloseDevice(self.sgfpm as *mut c_void);
+
+            if err != SGFDxErrorCode_SGFDX_ERROR_NONE.into() {
+                return Err(format!("CloseDevice: Failed : ErrorCode = {}", err));
+            }
 
             Ok(true)
         }
