@@ -7,7 +7,7 @@ The rust bindings to the secugen SDK allow you to use Secugen fingerprint scanne
 
 ```toml
 [dependencies]
-secugen_rs = "0.1.0"
+secugen_rs = "0.2.0"
 ```
 
 ## Usage
