@@ -30,7 +30,7 @@ pub struct DeviceInfo {
 
 pub struct FPM {
     sgfpm: *mut SGFPM,
-    device_info: Option<DeviceInfo>,
+    pub device_info: Option<DeviceInfo>,
 }
 
 impl Drop for FPM {
