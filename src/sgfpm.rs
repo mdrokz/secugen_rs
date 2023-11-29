@@ -8,24 +8,37 @@ use crate::{
     SGFPM_SetBrightness, SGFPM_SetFakeDetectionLevel, SGFPM,SGFPM_Terminate,SGFPM_CloseDevice
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 #[cfg(target_os = "linux")]
 pub struct DeviceInfo {
-    pub image_width: u64,
-    pub image_height: u64,
-    pub com_speed: u64,
-    pub com_port: u64,
+    device_id: u64,
+    contrast: u64,
+    device_sn: String,
+    brightness: u64,
+    gain: u64,
+    image_dpi: u64,
+    fw_version: u64,
+    image_width: u64,
+    image_height: u64,
+    com_speed: u64,
+    com_port: u64,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 #[cfg(target_os = "windows")]
 pub struct DeviceInfo {
-    pub image_width: u32,
-    pub image_height: u32,
-    pub com_speed: u32,
-    pub com_port: u32,
+    device_id: u32,
+    contrast: u32,
+    device_sn: String,
+    brightness: u32,
+    gain: u32,
+    image_dpi: u32,
+    fw_version: u32,
+    image_width: u32,
+    image_height: u32,
+    com_speed: u32,
+    com_port: u32,
 }
-
 #[derive(Debug)]
 
 pub struct FPM {
@@ -51,7 +64,7 @@ impl FPM {
     }
 
     pub fn capture_image(&mut self) -> Result<Vec<u8>, String> {
-        if let Some(device_info) = self.device_info {
+        if let Some(device_info) = &self.device_info {
             let buffer_size = (device_info.image_width * device_info.image_height) as usize;
             let mut buffer = vec![0xCCu8; buffer_size];
 
@@ -68,6 +81,18 @@ impl FPM {
             return Err("Device not initialized".to_string());
         }
     }
+
+    // pub fn enable_auto_event(&mut self, enable: bool) -> Result<bool, String> {
+    //     unsafe {
+    //         let err = SGFPM_EnableAutoOnEvent(self.sgfpm as *mut c_void, enable);
+
+    //         if err != SGFDxErrorCode_SGFDX_ERROR_NONE.try_into().unwrap() {
+    //             return Err(format!("EnableAutoOnEvent(): Failed : ErrorCode = {}", err));
+    //         }
+    //     }
+
+    //     Ok(true)
+    // }
 
     pub fn match_template(
         &mut self,
@@ -133,7 +158,7 @@ impl FPM {
         fake_detection_level: Option<i32>,
         smart_capture: Option<bool>,
         check_finger_liveness: Option<i32>,
-    ) -> Result<bool, String> {
+    ) -> Result<DeviceInfo, String> {
         let mut sgfpm = MaybeUninit::uninit();
 
         unsafe {
@@ -191,14 +216,21 @@ impl FPM {
 
             let device_info = DeviceInfo {
                 image_width: p_info.ImageWidth,
+                brightness: p_info.Brightness,
+                contrast: p_info.Contrast,
+                device_id: p_info.DeviceID,
+                device_sn: std::str::from_utf8(&p_info.DeviceSN).unwrap().to_string(),
+                fw_version: p_info.FWVersion,
+                gain: p_info.Gain,
+                image_dpi: p_info.ImageDPI,
                 image_height: p_info.ImageHeight,
                 com_speed: p_info.ComSpeed,
                 com_port: p_info.ComPort,
             };
 
-            self.device_info = Some(device_info);
+            self.device_info = Some(device_info.clone());
 
-            Ok(true)
+            Ok(device_info)
         }
     }
 
