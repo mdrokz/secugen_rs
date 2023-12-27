@@ -1,11 +1,12 @@
 use std::{ffi::c_void, mem::MaybeUninit};
 
 use crate::{
-    CreateSGFPMObject, SGDeviceInfoParam, SGFDxDeviceName_SG_DEV_AUTO,
-    SGFDxErrorCode_SGFDX_ERROR_NONE, SGFDxErrorCode_SGFDX_ERROR_WRONG_IMAGE,
-    SGFPM_EnableCheckOfFingerLiveness, SGFPM_EnableSmartCapture, SGFPM_GetDeviceInfo,
-    SGFPM_GetImage, SGFPM_GetMatchingScore, SGFPM_Init, SGFPM_MatchTemplate, SGFPM_OpenDevice,
-    SGFPM_SetBrightness, SGFPM_SetFakeDetectionLevel, SGFPM,SGFPM_Terminate,SGFPM_CloseDevice
+    tagSGFingerInfo, CreateSGFPMObject, SGDeviceInfoParam, SGFDxDeviceName_SG_DEV_AUTO,
+    SGFDxErrorCode_SGFDX_ERROR_NONE, SGFDxErrorCode_SGFDX_ERROR_WRONG_IMAGE, SGFPM_CloseDevice,
+    SGFPM_CreateTemplate, SGFPM_EnableCheckOfFingerLiveness, SGFPM_EnableSmartCapture,
+    SGFPM_GetDeviceInfo, SGFPM_GetImage, SGFPM_GetMatchingScore, SGFPM_GetMaxTemplateSize,
+    SGFPM_Init, SGFPM_MatchTemplate, SGFPM_OpenDevice, SGFPM_SetBrightness,
+    SGFPM_SetFakeDetectionLevel, SGFPM_Terminate, SGFPM,
 };
 
 #[derive(Debug, Clone)]
@@ -82,6 +83,48 @@ impl FPM {
         }
     }
 
+    pub fn create_template(&mut self, fp_image: &mut Vec<u8>) -> Result<Vec<u8>, String> {
+        if let Some(_) = &self.device_info {
+            #[cfg(target_os = "linux")]
+            let mut buffer_size: u64 = 0;
+            #[cfg(target_os = "windows")]
+            let mut buffer_size: u32 = 0;
+
+            #[cfg(target_os = "linux")]
+            let buffer_size_ptr = &mut buffer_size as *mut u64;
+            #[cfg(target_os = "windows")]
+            let buffer_size_ptr = &mut buffer_size as *mut u32;
+
+            unsafe {
+                let err = SGFPM_GetMaxTemplateSize(self.sgfpm as *mut c_void, buffer_size_ptr);
+                if err != SGFDxErrorCode_SGFDX_ERROR_NONE.try_into().unwrap() {
+                    return Err(format!(
+                        "SGFPM_GetMaxTemplateSize(): Failed : ErrorCode = {}",
+                        err
+                    ));
+                }
+            }
+            let mut buffer = vec![0xCCu8; buffer_size as usize];
+            let mut sg_finger_info = MaybeUninit::<tagSGFingerInfo>::uninit();
+
+            let err = unsafe {
+                SGFPM_CreateTemplate(
+                    self.sgfpm as *mut c_void,
+                    sg_finger_info.as_mut_ptr(),
+                    fp_image.as_mut_ptr(),
+                    buffer.as_mut_ptr(),
+                )
+            };
+            if err != SGFDxErrorCode_SGFDX_ERROR_NONE.try_into().unwrap() {
+                return Err(format!("CreateTemplate(): Failed : ErrorCode = {}", err));
+            }
+
+            return Ok(buffer);
+        } else {
+            return Err("Device not initialized".to_string());
+        }
+    }
+
     // pub fn enable_auto_event(&mut self, enable: bool) -> Result<bool, String> {
     //     unsafe {
     //         let err = SGFPM_EnableAutoOnEvent(self.sgfpm as *mut c_void, enable);
@@ -126,13 +169,13 @@ impl FPM {
     ) -> Result<u64, String> {
         #[cfg(target_os = "linux")]
         let mut score: u64 = 0;
-    
+
         #[cfg(target_os = "windows")]
         let mut score: u32 = 0;
-    
+
         #[cfg(target_os = "linux")]
         let score_ptr = &mut score as *mut u64;
-    
+
         #[cfg(target_os = "windows")]
         let score_ptr = &mut score as *mut u32;
 
