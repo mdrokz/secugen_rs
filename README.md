@@ -1,5 +1,8 @@
 # secugen_rs
 
+[![Docs](https://docs.rs/secugen_rs/badge.svg)](https://docs.rs/secugen_rs)
+[![Crates.io](https://img.shields.io/crates/v/secugen_rs.svg?maxAge=2592000)](https://crates.io/crates/secugen_rs)
+
 The rust bindings to the secugen SDK allow you to use Secugen fingerprint scanner line of products https://secugen.com/products/#fingerprint
 
 
